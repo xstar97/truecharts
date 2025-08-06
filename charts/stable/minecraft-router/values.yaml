@@ -46,6 +46,10 @@ workload:
           env:
             API_BINDING: ":{{ .Values.service.api.ports.api.port }}"
             PORT: "{{ .Values.service.main.ports.main.port }}"
+            # enabled for auto discovery to work
+            IN_KUBE_CLUSTER: true
+            # leave blank for all namespaces
+            # KUBE_NAMESPACE: ""
             DEFAULT: "{{ .Values.mcrouter.default }}"
             MAPPING: '{{ join "," .Values.mcrouter.mappings }}'
 
