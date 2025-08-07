@@ -23,7 +23,7 @@ RUN apk add --no-cache bash curl busybox-suid && \
 RUN crontab /app/crontab.txt
 
 # Start cron and HTTP server
-CMD sh -c "crond -f -L /dev/stdout & python3 -m http.server 8000 --directory /app"
+CMD sh -c "python3 /app/balfolk_ical.py && crond -f -L /dev/stdout & python3 -m http.server 8000 --directory /app"
 
 LABEL "org.opencontainers.image.source"="https://github.com/truecharts/containers"
 
