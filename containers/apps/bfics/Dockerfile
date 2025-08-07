@@ -1,7 +1,7 @@
 FROM python:3.12-alpine
 
 # Install dependencies
-RUN pip install --no-cache-dir requests beautifulsoup4
+RUN pip install --no-cache-dir requests beautifulsoup4 icalendar pytz
 
 # Create working directory
 WORKDIR /app
