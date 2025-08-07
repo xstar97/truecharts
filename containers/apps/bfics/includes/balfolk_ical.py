@@ -65,12 +65,75 @@ def fetch_balfolk_events():
     return events
 
 
+def replace_year(dt, new_year):
+    return dt.replace(year=new_year)
+
+def fix_years(start_dt, end_dt):
+    current_year = datetime.now().year
+
+    start_year = start_dt.year
+    end_year = end_dt.year
+
+    if start_year == 1900 and end_year != 1900:
+        start_dt = replace_year(start_dt, end_year)
+    elif end_year == 1900 and start_year != 1900:
+        end_dt = replace_year(end_dt, start_year)
+    elif start_year == 1900 and end_year == 1900:
+        start_dt = replace_year(start_dt, current_year)
+        end_dt = replace_year(end_dt, current_year)
+
+    return start_dt, end_dt
+
 def parse_event_datetime(datetime_str):
+    tz = pytz.timezone("Europe/Amsterdam")
+    datetime_str = datetime_str.strip()
+    datetime_str = datetime_str.replace(';', '')  # remove semicolon if present
+
     try:
-        # Example datetime_str: "October 12, 2025 (Sunday) 20:00 - 23:30"
-        # We split on parentheses and then get the time range
-        date_part = datetime_str.split('(')[0].strip()  # "October 12, 2025"
-        time_part = datetime_str.split(')')[1].strip()  # "20:00 - 23:30"
+        # Case 1: "January 9 4:00 PM - January 12, 2026 (Fri-Mon)"
+        m = re.match(r'^([A-Za-z]+ \d{1,2} \d{1,2}:\d{2} [AP]M) - ([A-Za-z]+ \d{1,2}, \d{4})(?: \(.+\))?$', datetime_str)
+        if m:
+            start_str, end_str = m.groups()
+            start_naive = datetime.strptime(start_str, "%B %d %I:%M %p")
+            end_naive = datetime.strptime(end_str, "%B %d, %Y")
+            end_naive += timedelta(days=1)
+            start_naive, end_naive = fix_years(start_naive, end_naive)
+            return tz.localize(start_naive), tz.localize(end_naive)
+
+        # Case 2: "November 14 - 17, 2025 (Fri-Mon)"
+        m_partial_same_month = re.match(r'^([A-Za-z]+) (\d{1,2}) - (\d{1,2}), (\d{4})(?: \(.+\))?$', datetime_str)
+        if m_partial_same_month:
+            month, start_day, end_day, year = m_partial_same_month.groups()
+            start_str = f"{month} {start_day}, {year}"
+            end_str = f"{month} {end_day}, {year}"
+            start_naive = datetime.strptime(start_str, "%B %d, %Y")
+            end_naive = datetime.strptime(end_str, "%B %d, %Y") + timedelta(days=1)
+            start_naive, end_naive = fix_years(start_naive, end_naive)
+            return tz.localize(start_naive), tz.localize(end_naive)
+
+        # Case 3: Full range with repeated months: "September 10 - November 19, 2025"
+        m_partial_range = re.match(r'^([A-Za-z]+ \d{1,2}) - ([A-Za-z]+ \d{1,2}, \d{4})(?: \(.+\))?$', datetime_str)
+        if m_partial_range:
+            start_date_part, end_date_part = m_partial_range.groups()
+            end_date_obj = datetime.strptime(end_date_part, "%B %d, %Y")
+            start_date_str = f"{start_date_part}, {end_date_obj.year}"
+            start_naive = datetime.strptime(start_date_str, "%B %d, %Y")
+            end_naive = end_date_obj + timedelta(days=1)
+            start_naive, end_naive = fix_years(start_naive, end_naive)
+            return tz.localize(start_naive), tz.localize(end_naive)
+
+        # Case 4: Full date ranges: "September 8, 2025 - January 12, 2026"
+        m_full_range = re.match(r'^([A-Za-z]+ \d{1,2}, \d{4}) - ([A-Za-z]+ \d{1,2}, \d{4})(?: \(.+\))?$', datetime_str)
+        if m_full_range:
+            start_str, end_str = m_full_range.groups()
+            start_naive = datetime.strptime(start_str, "%B %d, %Y")
+            end_naive = datetime.strptime(end_str, "%B %d, %Y") + timedelta(days=1)
+            start_naive, end_naive = fix_years(start_naive, end_naive)
+            return tz.localize(start_naive), tz.localize(end_naive)
+
+        # Case 5: Original format with parentheses and time range (AM/PM support)
+        date_part = datetime_str.split('(')[0].strip()
+        time_part = datetime_str.split(')')[1].strip()
 
         time_range = [t.strip() for t in time_part.split('-')]
         if len(time_range) != 2:
@@ -89,7 +152,8 @@ def parse_event_datetime(datetime_str):
 
         start_naive = datetime.strptime(start_str, dt_format)
         end_naive = datetime.strptime(end_str, dt_format)
-        tz = pytz.timezone("Europe/Amsterdam")
+
+        start_naive, end_naive = fix_years(start_naive, end_naive)
         return tz.localize(start_naive), tz.localize(end_naive)
 
     except Exception as e:
@@ -103,8 +167,8 @@ def fetch_event_detail(plug_url):
         r.raise_for_status()
         soup = BeautifulSoup(r.text, "html.parser")
 
-        summary_text = ""
         description_div = soup.find("div", class_="description")
+        summary_text = ""
         if description_div:
             p = description_div.find("p")
             if p:
@@ -112,21 +176,40 @@ def fetch_event_detail(plug_url):
                     br.replace_with("\n")
                 summary_text = p.get_text(strip=True, separator="\n")
 
-        event_datetime = None
+        # Look for detailed schedule
+        schedule_div = soup.select_one("div.event-schedule")
+        if schedule_div:
+            datetimes = []
+            for h3 in schedule_div.find_all("h3"):
+                text = h3.get_text(strip=True)  # ✅ grabs text from all nested spans
+                if not text:
+                    continue
+                start_dt, end_dt = parse_event_datetime(text)
+                if start_dt and end_dt:
+                    datetimes.append((start_dt, end_dt))
+        
+            if not datetimes:
+                print(f"⚠️ Schedule found but no valid date-times parsed for {plug_url}")
+        
+            return summary_text.strip(), datetimes
+
+
+        # If no schedule was found, fallback to top-level <li> datetime
         for li in soup.find_all("li"):
             if li.find("i", class_="pi pi-calendar"):
                 span = li.find("span")
                 if span:
                     datetime_str = span.get_text(strip=True)
-                    event_datetime = parse_event_datetime(datetime_str)
+                    start_dt, end_dt = parse_event_datetime(datetime_str)
+                    if start_dt and end_dt:
+                        return summary_text.strip(), [(start_dt, end_dt)]
                 break
 
-        return summary_text, event_datetime
+        return summary_text.strip(), []
 
     except Exception as e:
-        print(f"Error fetching plug.events details from {plug_url}: {e}")
-        return None, (None, None)
-
+        print(f"❌ Error fetching plug.events details from {plug_url}: {e}")
+        return None, []
 
 def main():
     events = fetch_balfolk_events()
@@ -145,31 +228,29 @@ def main():
         dtend = None
 
         if ev["plug_url"]:
-            plug_summary, (start_dt, end_dt) = fetch_event_detail(ev["plug_url"])
-            if start_dt and end_dt:
-                dtstart = start_dt
-                dtend = end_dt
-                summary = plug_summary if plug_summary else f"Details not available for {ev['name']}"
-            else:
-                print(f"No valid datetime from plug.events for {ev['name']}, using fallback")
+            plug_summary, ranges = fetch_event_detail(ev["plug_url"])
+            summaries = [plug_summary or f"Details not available for {ev['name']}"] * len(ranges)
+            datetimes = ranges
 
-        if not dtstart:
-            # Fallback: full day event using balfolk.nl date, with placeholder summary if needed
+        if not datetimes:
+            # Fallback: full day event using balfolk.nl date
+            tz = pytz.timezone("Europe/Amsterdam")
             dtstart = tz.localize(datetime(ev["date"].year, ev["date"].month, ev["date"].day))
             dtend = dtstart + timedelta(days=1)
-            summary = summary or f"{ev['name']} (details unavailable)"
+            datetimes = [(dtstart, dtend)]
+            summaries = [f"{ev['name']} (details unavailable)"]
 
-        event = Event()
-        event.add("uid", str(uuid.uuid4()))
-        event.add("summary", ev["name"])
-        event.add("description", summary or "")
-        event.add("dtstart", dtstart)
-        event.add("dtend", dtend)
-        event.add("location", ev["location"])
-        if ev["plug_url"]:
-            event.add("url", ev["plug_url"])
-
-        cal.add_component(event)
+        for (dtstart, dtend), summary in zip(datetimes, summaries):
+            event = Event()
+            event.add("uid", str(uuid.uuid4()))
+            event.add("summary", ev["name"])
+            event.add("description", summary)
+            event.add("dtstart", dtstart)
+            event.add("dtend", dtend)
+            event.add("location", ev["location"])
+            if ev["plug_url"]:
+                event.add("url", ev["plug_url"])
+            cal.add_component(event)
 
     with open("balfolk.ics", "wb") as f:
         f.write(cal.to_ical())
