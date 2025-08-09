@@ -1,7 +1,7 @@
 image:
   pullPolicy: IfNotPresent
   repository: yourls
-  tag: 1.10.2-fpm-alpine@sha256:46eda3b37e42b793ae51086adde2f3b3b66693fe60b6a6e59e044f1841f0b516
+  tag: 1.10.2ne@sha256:f92a2e81665145daf32932872e5b5face5b8b65395eb8bd23b514f9d07df2a29
 securityContext:
   container:
     readOnlyRootFilesystem: false
@@ -33,11 +33,11 @@ workload:
                 name: '{{ printf "%s-%s" .Release.Name "mariadbcreds" }}'
                 key: mariadb-password
             # YOURLS_HOURS_OFFSET: ""
-            # YOURLS_PASS: ""
             # protect admin form
             YOURLS_PRIVATE: false
             YOURLS_SITE: "{{ .Values.chartContext.appUrl }}"
-            # YOURLS_USER: ""
+            YOURLS_USER: ""
+            YOURLS_PASS: ""
 
 mariadb:
   enabled: true
