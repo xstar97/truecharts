@@ -9,10 +9,10 @@ annotations:
   truecharts.org/min_helm_version: "3.14"
   truecharts.org/train: stable
 apiVersion: v2
-appVersion: 2.0.8
+appVersion: 2.0.9
 dependencies:
   - name: common
-    version: 28.15.0
+    version: 28.15.1
     repository: oci://tccr.io/truecharts
     condition: ""
     alias: ""
@@ -36,5 +36,5 @@ sources:
   - https://github.com/truecharts/charts/tree/master/charts/stable/docuseal
   - https://hub.docker.com/r/docuseal/docuseal
 type: application
-version: 5.2.0
+version: 5.2.2
 
