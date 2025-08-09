@@ -7,7 +7,7 @@ annotations:
   truecharts.org/category: inventory
   truecharts.org/max_helm_version: "3.17"
   truecharts.org/min_helm_version: "3.14"
-  truecharts.org/train: incubator
+  truecharts.org/train: stable
 apiVersion: v2
 appVersion: 0.22.1
 dependencies:
@@ -20,7 +20,7 @@ dependencies:
     import-values: []
 deprecated: false
 description: Keep track of your inventory of 3D-printer filament spools.
-home: https://truecharts.org/charts/incubator/spoolman
+home: https://truecharts.org/charts/stable/spoolman
 icon: https://truecharts.org/img/hotlink-ok/chart-icons/spoolman.webp
 keywords:
   - spoolman
@@ -34,7 +34,6 @@ name: spoolman
 sources:
   - https://ghcr.io/donkie/spoolman
   - https://github.com/Donkie/Spoolman
-  - https://github.com/truecharts/charts/tree/master/charts/incubator/spoolman
+  - https://github.com/truecharts/charts/tree/master/charts/stable/spoolman
 type: application
-version: 0.1.1
-
+version: 1.0.0
