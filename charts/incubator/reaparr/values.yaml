@@ -12,14 +12,14 @@ service:
     ports:
       main:
         protocol: http
-        port: 7777
+        targetPort: 7000
+        port: 7000
 workload:
   main:
     podSpec:
       containers:
         main:
           env:
-            PORT: "{{ .Values.service.main.ports.main.port }}"
             LOG_LEVEL: "INFORMATION"
             LOG_ENV_VARS: false
             UNMASKED: false
