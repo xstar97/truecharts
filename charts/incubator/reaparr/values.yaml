@@ -20,9 +20,9 @@ workload:
         main:
           env:
             PORT: "{{ .Values.service.main.ports.main.port }}"
-            LOG_LEVEL: INFORMATION # Set the logging level in the docker logging
-            LOG_ENV_VARS: false # Enable Log dump of all available ENV variables on Reaparr startup
-            UNMASKED: false # Unmask sensitive data in logs if true
+            LOG_LEVEL: "INFORMATION"
+            LOG_ENV_VARS: false
+            UNMASKED: false
 persistence:
   config:
     enabled: true
