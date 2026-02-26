@@ -14,17 +14,17 @@ annotations:
   trueforge.org/min_helm_version: "3.14"
   trueforge.org/train: stable
 apiVersion: v2
-appVersion: 16.2.0
+appVersion: 16.3.0
 dependencies:
   - name: common
-    version: 28.31.19
+    version: 28.32.5
     repository: oci://oci.trueforge.org/truecharts
     condition: ""
     alias: ""
     tags: []
     import-values: []
   - name: mariadb
-    version: 17.13.0
+    version: 17.14.1
     repository: oci://oci.trueforge.org/truecharts
     condition: mariadb.enabled
     alias: ""
@@ -50,5 +50,5 @@ sources:
   - https://github.com/linuxserver/docker-piwigo
   - https://github.com/trueforge-org/truecharts/tree/master/charts/stable/piwigo
 type: application
-version: 18.8.0
+version: 18.11.1
 
