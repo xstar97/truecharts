@@ -50,5 +50,5 @@ sources:
   - https://github.com/trueforge-org/truecharts/tree/master/charts/stable/romm
   - https://github.com/zurdi15/romm
 type: application
-version: 17.6.6
+version: 18.0.0
 
