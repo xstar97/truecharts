@@ -18,8 +18,6 @@ workload:
         main:
           probes:
             liveness:
-              enabled: true
-              type: http
               path: /api/v1/status
             readiness:
               enabled: true
