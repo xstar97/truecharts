@@ -39,7 +39,7 @@ workload:
             # the binary refuses to start if this is shorter than 32 bytes. 
             # Generate with openssl rand -base64 48. 
             # Must stay stable across restarts — rotating it invalidates every issued API key.
-            HBOX_AUTH_API_KEY_PEPPER: "ChangeME-0031bb4c4840318b713ff591244decd5836f0ee7f3006120b6de09af96e0cec2ccc46f3817d216a1cd8d600292c2ddf0"
+            HBOX_AUTH_API_KEY_PEPPER: "CHANGE_ME-CHANGE_ME-CHANGE_ME-CHANGE_ME-CHANGE_ME-CHANGE_ME"
 
             # log level to use: trace, debug, info, warn, error, fatal, panic
             HBOX_LOG_LEVEL: "info"
