@@ -31,7 +31,7 @@ workload:
             # OIDC_CLIENT_SECRET: ""
             # OIDC_DISCOVERY_URL: ""
             # auto set url
-            ORIGIN: "{{ .Values.chartContext.appUrl }}
+            ORIGIN: "{{ .Values.chartContext.appUrl }}"
 persistence:
   config:
     enabled: true
