@@ -38,5 +38,5 @@ sources:
   - https://github.com/sct/overseerr
   - https://github.com/trueforge-org/truecharts/tree/master/charts/stable/overseerr
 type: application
-version: 17.4.1
+version: 18.0.0
 
